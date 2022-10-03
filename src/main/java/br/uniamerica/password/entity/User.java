@@ -1,7 +1,6 @@
 package br.uniamerica.password.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,8 +12,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -27,6 +24,10 @@ public class User extends AbstractEntity implements UserDetails {
     @Getter @Setter
     @Column(name = "username", nullable = false, unique = true)
     private String username;
+
+    @Getter @Setter
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
 
     @Getter @Setter
     @Column(name = "password", nullable = false)
