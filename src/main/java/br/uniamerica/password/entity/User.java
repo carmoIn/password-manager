@@ -11,12 +11,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @NoArgsConstructor
+@Table(name = "users")
 public class User extends AbstractEntity implements UserDetails {
     @Getter @Setter
     @Column(name = "name", nullable = false)
