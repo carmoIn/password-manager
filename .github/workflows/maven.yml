@@ -1,0 +1,19 @@
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+  push:
+    branches:
+      - master
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Linter
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run check style
+        uses: nikitasavinov/checkstyle-action@master
+        with:
+          checkstyle_config: style_checks.xml
+          fail_on_error: true
+          filter_mode: nofilter
+          level: error
