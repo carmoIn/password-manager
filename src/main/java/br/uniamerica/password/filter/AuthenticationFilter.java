@@ -1,15 +1,16 @@
 package br.uniamerica.password.filter;
 
 import br.uniamerica.password.entity.User;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
+import br.uniamerica.password.utils.JwtUtils;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -17,32 +18,51 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-@Slf4j
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
 
+    private final JwtUtils jwtUtils;
+
     public AuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
+        this.jwtUtils = new JwtUtils();
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                username, password
-        );
+        if (!HttpMethod.POST.matches(request.getMethod())) {
+            throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
+        }
 
-        return this.authenticationManager.authenticate(authenticationToken);
+        try {
+            JsonAuthenticationParser auth = new ObjectMapper().readValue(
+                    request.getInputStream(), JsonAuthenticationParser.class
+            );
+
+            UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(
+                    auth.username, auth.password
+            );
+
+            return this.authenticationManager.authenticate(authRequest);
+        } catch (IOException e) {
+            response.setContentType(APPLICATION_JSON_VALUE);
+            throw new AuthenticationServiceException("Could not parse authentication payload");
+        }
+    }
+
+    record JsonAuthenticationParser(String username, String password) {
+        @JsonCreator
+        JsonAuthenticationParser(@JsonProperty("username") String username, @JsonProperty("password") String password) {
+            this.username = username;
+            this.password = password;
+        }
     }
 
     @Override
@@ -53,25 +73,38 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
             Authentication authentication
     ) throws IOException, ServletException {
         User user = (User) authentication.getPrincipal();
-        Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
-        String accessToken = JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
-                .withIssuer(request.getRequestURL().toString())
-                .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toList()))
-                .sign(algorithm);
+        String requestURI = request.getRequestURL().toString();
 
-        String refreshToken = JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
-                .withIssuer(request.getRequestURL().toString())
-                .sign(algorithm);
+        String accessToken = jwtUtils.generateAccessToken(user, requestURI);
+
+        String refreshToken = jwtUtils.generateRefreshToken(user, requestURI);
 
         Map<String, String> tokens = new HashMap<>();
         tokens.put("access_token", accessToken);
         tokens.put("refresh_token", refreshToken);
+
+        sendJsonResponse(response, tokens, HttpServletResponse.SC_OK);
+    }
+
+    @Override
+    protected void unsuccessfulAuthentication(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException failed
+    ) throws IOException, ServletException {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", failed.getMessage());
+
+        sendJsonResponse(response, error, HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    private void sendJsonResponse(
+            HttpServletResponse response,
+            Map<String, String> responseMessage,
+            int responseStatus
+    ) throws IOException {
         response.setContentType(APPLICATION_JSON_VALUE);
-        new ObjectMapper().writeValue(response.getOutputStream(), tokens);
+        response.setStatus(responseStatus);
+        response.getWriter().write(new ObjectMapper().writeValueAsString(responseMessage));
     }
 }
