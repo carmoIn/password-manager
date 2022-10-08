@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static br.uniamerica.password.utils.HttpConstants.SIGNING_KEY;
+import static br.uniamerica.password.utils.HttpConstants.TOKEN_PREFIX;
 import static java.util.Arrays.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
@@ -34,10 +36,10 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } else {
             String authtorizationHeader = request.getHeader(AUTHORIZATION);
-            if (authtorizationHeader != null && authtorizationHeader.startsWith("Bearer ")) {
+            if (authtorizationHeader != null && authtorizationHeader.startsWith(TOKEN_PREFIX)) {
                 try {
-                    String token = authtorizationHeader.substring("Bearer ".length());
-                    Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
+                    String token = authtorizationHeader.substring(TOKEN_PREFIX.length());
+                    Algorithm algorithm = Algorithm.HMAC256(SIGNING_KEY.getBytes());
                     JWTVerifier verifier = JWT.require(algorithm).build();
                     DecodedJWT decodedJWT = verifier.verify(token);
                     String username = decodedJWT.getSubject();
