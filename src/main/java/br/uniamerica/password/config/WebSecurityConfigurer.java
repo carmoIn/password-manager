@@ -50,6 +50,10 @@ public class WebSecurityConfigurer extends WebSecurityConfigurerAdapter {
         return new DelegatingPasswordEncoder(defaultEncoding, encoders);
     }
 
+    @Bean
+    public AuthorizationFilter authorizationTokenFilterBean() throws Exception {
+        return new AuthorizationFilter();
+    }
 
     @Bean
     @Override
@@ -68,7 +72,7 @@ public class WebSecurityConfigurer extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().antMatchers(GET, "/api/**").hasAnyAuthority("ROLE_ADMIN");
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilter(authenticationFilter);
-        http.addFilterBefore(new AuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authorizationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Override
