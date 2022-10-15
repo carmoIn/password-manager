@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,6 +37,10 @@ public class User extends AbstractEntity implements UserDetails {
     @Column(name = "password", nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
+    @OneToMany(mappedBy = "password")
+    private Set<Password> passwords;
+
 
     public User(
             String name,
