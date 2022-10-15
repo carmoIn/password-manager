@@ -31,7 +31,7 @@ import static org.springframework.http.HttpMethod.GET;
 public class WebSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
     private static final String[] AUTH_WHITELIST = {
-            "/api/login/**",
+            "/api/users/login/**",
             "/api/users/register/**",
             "/swagger-resources/**",
             "/swagger-ui.html**",
@@ -65,7 +65,7 @@ public class WebSecurityConfigurer extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManagerBean());
-        authenticationFilter.setFilterProcessesUrl("/api/login");
+        authenticationFilter.setFilterProcessesUrl("/api/users/login");
 
         http.csrf().disable();
         http.cors();
