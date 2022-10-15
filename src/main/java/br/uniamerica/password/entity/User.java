@@ -43,8 +43,9 @@ public class User extends AbstractEntity implements UserDetails {
     @JsonDeserialize(using = JsonDeserializers.PasswordDeserializer.class)
     private String password;
 
-    @OneToMany(mappedBy = "password")
-    private Set<Password> passwords;
+    @Getter @Setter
+    @OneToMany(mappedBy = "user")
+    private Set<Password> passwords = new HashSet<>();
 
 
     public User(

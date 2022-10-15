@@ -11,8 +11,8 @@ import javax.persistence.*;
 @Table(name = "passwords")
 public class Password extends AbstractEntity {
     @Getter @Setter
+    @ManyToOne
     @JoinColumn(nullable = false, name = "user_id")
-    @ManyToOne(fetch = FetchType.EAGER)
     private User user;
 
     @Getter @Setter

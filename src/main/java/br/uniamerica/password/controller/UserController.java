@@ -3,6 +3,7 @@ package br.uniamerica.password.controller;
 import br.uniamerica.password.entity.User;
 import br.uniamerica.password.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/users")
+@RepositoryRestController("api/users")
 @CrossOrigin
 public class UserController {
     @Autowired
