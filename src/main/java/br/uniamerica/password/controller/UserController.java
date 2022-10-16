@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
 @RestController
-@RepositoryRestController("api/users")
+@RepositoryRestController
 @CrossOrigin
 public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("me")
+    @RequestMapping(method = GET, value = "/api/users/me")
     public ResponseEntity<User> getCurrentUser() {
         UsernamePasswordAuthenticationToken currentAuth = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
@@ -27,7 +30,7 @@ public class UserController {
         );
     }
 
-    @PostMapping("register")
+    @RequestMapping(method = POST, value = "/api/users/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         Optional<User> registeredUser = this.userService.insert(user);
         if (registeredUser.isPresent()) {
